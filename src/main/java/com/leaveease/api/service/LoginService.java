@@ -1,28 +1,44 @@
 package com.leaveease.api.service;
 
-import com.leaveease.api.dto.LoginDto;
-import com.leaveease.api.repository.LoginRepository;
+import com.leaveease.api.dto.request.LoginRequestDto;
+import com.leaveease.api.dto.response.LoginInfoResponseDto;
+import com.leaveease.api.entity.StaffEntity;
+import com.leaveease.api.repository.StaffRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
+
+import static com.leaveease.api.util.ErrorMessages.LOGIN_INVALID_CREDENTIALS;
 
 @Service
 @RequiredArgsConstructor
 public class LoginService {
 
-    @Autowired
-    private LoginRepository loginRepository;
+    private final StaffRepository staffRepository;
 
-    public Map<String, Object> login(LoginDto dto) {
-        String salt = loginRepository.getSaltByStaffNumber(dto.getStaffNumber());
-        String password =dto.getPassword();
-        String hash = hashPassword(password, salt);
-        return loginRepository.login(dto.getStaffNumber(), hash);
+    public LoginInfoResponseDto login(LoginRequestDto dto) {
+        StaffEntity staff = staffRepository.findByStaffNumber(dto.getStaffNumber())
+                .orElseThrow(() -> new RuntimeException("Invalid staff number or password."));
+
+        String decryptedPassword = dto.getPassword(); // already decrypted from FE
+        String expectedHash = hashPassword(decryptedPassword, staff.getPasswordSalt());
+
+        if (!expectedHash.equals(staff.getPasswordHash())) {
+            throw new RuntimeException(LOGIN_INVALID_CREDENTIALS.getMessage());
+        }
+
+        return new LoginInfoResponseDto(
+                staff.getStaffId(),
+                staff.getStaffNumber(),
+                staff.getFullName(),
+                staff.getEmail(),
+                staff.getDepartment(),
+                staff.getJobTitle(),
+                staff.getRole()
+        );
     }
 
     private String hashPassword(String password, String salt) {

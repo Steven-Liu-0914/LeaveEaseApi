@@ -5,21 +5,28 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class CamelCaseMapSerializer extends JsonSerializer<Map<String, Object>> {
+public class CamelCaseMapSerializer extends JsonSerializer<Object> {
 
     @Override
-    public void serialize(Map<String, Object> originalMap, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        Map<String, Object> camelCaseMap = new LinkedHashMap<>();
-
-        for (Map.Entry<String, Object> entry : originalMap.entrySet()) {
-            String originalKey = entry.getKey();
-            String camelKey = Character.toLowerCase(originalKey.charAt(0)) + originalKey.substring(1);
-            camelCaseMap.put(camelKey, entry.getValue());
+    public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        // ✅ Only apply custom logic if it's a Map
+        if (value instanceof Map<?, ?> map) {
+            gen.writeStartObject();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = toCamelCase(entry.getKey().toString());
+                gen.writeObjectField(key, entry.getValue());
+            }
+            gen.writeEndObject();
+        } else {
+            // ✅ Fallback to Jackson default for DTOs (like DashboardDto)
+            gen.writeObject(value);
         }
+    }
 
-        gen.writeObject(camelCaseMap);
+    private String toCamelCase(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toLowerCase() + input.substring(1);
     }
 }
