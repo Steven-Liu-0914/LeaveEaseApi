@@ -12,27 +12,24 @@ public class LeaveApplicationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "LeaveApplicationId")  // ✅ camelCase
     private Integer leaveApplicationId;
 
-    @Column(name = "StaffId")
+    // ✅ Setup @ManyToOne mapping to StaffEntity
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "StaffId", referencedColumnName = "StaffId", insertable = false, updatable = false)
+    private StaffEntity staff;
+
     private Integer staffId;
 
-    @Column(name = "LeaveType")
     private String leaveType;
 
-    @Column(name = "StartDate")
     private LocalDate startDate;
 
-    @Column(name = "EndDate")
     private LocalDate endDate;
 
-    @Column(name = "Reason")
     private String reason;
 
-    @Column(name = "Status")
     private String status = "Pending";
 
-    @Column(name = "CreatedAt")
     private LocalDate createdAt = LocalDate.now();
 }

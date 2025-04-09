@@ -19,4 +19,15 @@ public interface LeaveApplicationRepository extends JpaRepository<LeaveApplicati
     );
 
     List<LeaveApplicationEntity> findByStaffIdOrderByStartDateDesc(Integer staffId);
+
+    List<LeaveApplicationEntity> findByStaffIdAndStatusAndStartDateGreaterThanEqual(
+            int staffId, String status, LocalDate startDate);
+
+    List<LeaveApplicationEntity> findTop10ByStaffIdAndStatusAndStartDateAfter(
+            int staffId, String status, LocalDate startDate);
+
+    List<LeaveApplicationEntity> findByStatusAndStaff_DepartmentAndStaff_RoleOrderByStaff_StaffNumberAsc(String status, String department, String role);
+
+    List<LeaveApplicationEntity> findByStatusAndStartDateBetween(String status, LocalDate start, LocalDate end);
+
 }

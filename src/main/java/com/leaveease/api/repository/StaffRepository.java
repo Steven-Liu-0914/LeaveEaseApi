@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface StaffRepository extends JpaRepository<StaffEntity, Integer> {
     Optional<StaffEntity> findByStaffNumber(String staffNumber);
+    StaffEntity findByStaffId(int staffId);
 }

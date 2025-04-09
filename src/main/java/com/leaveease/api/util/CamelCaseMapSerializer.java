@@ -11,7 +11,7 @@ public class CamelCaseMapSerializer extends JsonSerializer<Object> {
 
     @Override
     public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        // ✅ Only apply custom logic if it's a Map
+        // Only apply custom logic if it's a Map
         if (value instanceof Map<?, ?> map) {
             gen.writeStartObject();
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -20,7 +20,7 @@ public class CamelCaseMapSerializer extends JsonSerializer<Object> {
             }
             gen.writeEndObject();
         } else {
-            // ✅ Fallback to Jackson default for DTOs (like DashboardDto)
+            // Fallback to Jackson default for DTOs (like DashboardDto)
             gen.writeObject(value);
         }
     }

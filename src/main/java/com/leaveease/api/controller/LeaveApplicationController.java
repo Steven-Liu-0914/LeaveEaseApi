@@ -36,4 +36,16 @@ public class LeaveApplicationController {
         service.cancelLeave(leaveId);
         return new ApiResponse<>(null);
     }
+
+    @PutMapping("/approve/{leaveId}")
+    public ApiResponse<Void> approveLeave(@PathVariable int leaveId) {
+        service.approveLeave(leaveId);
+        return new ApiResponse<>(null);
+    }
+
+    @PutMapping("/reject/{leaveId}")
+    public ApiResponse<Void> rejectLeave(@PathVariable int leaveId) {
+        service.rejectLeave(leaveId);
+        return new ApiResponse<>(null);
+    }
 }

@@ -10,5 +10,6 @@ public class DashboardResponseDto {
     private int remainingLeave;
     private int upcomingLeave;
     private int totalApplied;
-    private List<LeaveApplicationEntity> nextUpcomingLeave;
+    private List<LeaveHistoryResponseDto> nextUpcomingLeave;
+    private List<PendingLeavesForReviewResponseDto> pendingApproveLeave;
 }
