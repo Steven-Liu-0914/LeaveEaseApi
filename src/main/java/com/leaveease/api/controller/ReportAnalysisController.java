@@ -26,6 +26,6 @@ public class ReportAnalysisController {
     @PostMapping("/export")
     public ResponseEntity<byte[]> exportToExcel(@RequestBody ReportAnalysisRequestDto request) {
         List<ReportAnalysisResponseDto> data = service.getReport(request);
-        return ExcelExportUtil.exportToExcel(data, "report-analysis.xlsx");
+        return ExcelExportUtil.exportReportAnalysisToExcel(data, "report-analysis.xlsx");
     }
 }

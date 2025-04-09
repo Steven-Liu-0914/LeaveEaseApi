@@ -2,6 +2,8 @@ package com.leaveease.api.repository;
 
 import com.leaveease.api.entity.LeaveApplicationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -30,4 +32,13 @@ public interface LeaveApplicationRepository extends JpaRepository<LeaveApplicati
 
     List<LeaveApplicationEntity> findByStatusAndStartDateBetween(String status, LocalDate start, LocalDate end);
 
+    @Query("SELECT l FROM LeaveApplicationEntity l " +
+            "WHERE l.staffId = :staffId AND l.status IN :statuses " +
+            "AND l.startDate <= :endDate AND l.endDate >= :startDate")
+    List<LeaveApplicationEntity> findByStaffIdAndStatusInAndDateRangeOverlap(
+            @Param("staffId") int staffId,
+            @Param("statuses") List<String> statuses,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

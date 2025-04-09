@@ -2,8 +2,10 @@ package com.leaveease.api.service;
 
 import com.leaveease.api.dto.response.CalendarEventResponseDto;
 import com.leaveease.api.entity.LeaveApplicationEntity;
+import com.leaveease.api.entity.PublicHolidayEntity;
 import com.leaveease.api.entity.StaffEntity;
 import com.leaveease.api.repository.LeaveApplicationRepository;
+import com.leaveease.api.repository.PublicHolidayRepository;
 import com.leaveease.api.repository.StaffRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class LeaveCalendarService {
 
     private final LeaveApplicationRepository leaveRepo;
     private final StaffRepository staffRepo;
+    private final PublicHolidayRepository publicHolidayRepo;
 
     public List<CalendarEventResponseDto> getCalendarByMonth(int year, int month) {
         LocalDate start = LocalDate.of(year, month, 1);
@@ -37,6 +40,17 @@ public class LeaveCalendarService {
                 dto.setTitle(staff.getFullName() + " - " + app.getLeaveType());
                 events.add(dto);
             }
+        }
+
+        // 2. Add Public Holidays
+        List<PublicHolidayEntity> holidays = publicHolidayRepo.findByDateBetween(start, end);
+        for (PublicHolidayEntity holiday : holidays) {
+            CalendarEventResponseDto dto = new CalendarEventResponseDto();
+            dto.setStart(holiday.getDate().toString());
+            dto.setEnd(holiday.getDate().toString());
+            dto.setTitle("Public Holiday – " + holiday.getName());
+
+            events.add(dto);
         }
 
         return events;

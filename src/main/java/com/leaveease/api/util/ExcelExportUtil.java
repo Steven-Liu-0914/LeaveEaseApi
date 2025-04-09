@@ -1,6 +1,8 @@
 package com.leaveease.api.util;
 
+import com.leaveease.api.dto.response.PublicHolidayResponseDto;
 import com.leaveease.api.dto.response.ReportAnalysisResponseDto;
+import com.leaveease.api.entity.PublicHolidayEntity;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpHeaders;
@@ -12,7 +14,7 @@ import java.util.List;
 
 public class ExcelExportUtil {
 
-    public static ResponseEntity<byte[]> exportToExcel(List<ReportAnalysisResponseDto> data, String filename) {
+    public static ResponseEntity<byte[]> exportReportAnalysisToExcel(List<ReportAnalysisResponseDto> data, String filename) {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Report");
 
@@ -34,6 +36,39 @@ public class ExcelExportUtil {
                 row.createCell(5).setCellValue(dto.getTakenSick());
                 row.createCell(6).setCellValue(dto.getTakenEmergency());
                 row.createCell(7).setCellValue(dto.getTotal());
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            workbook.write(outputStream);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(outputStream.toByteArray());
+
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to export to Excel");
+        }
+    }
+
+
+    public static ResponseEntity<byte[]> exportPublicHolidayToExcel(List<PublicHolidayResponseDto> data, String filename) {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Public Holidays");
+
+            Row headerRow = sheet.createRow(0);
+            String[] headers = { "Name", "Date", "Day" };
+
+            for (int i = 0; i < headers.length; i++) {
+                headerRow.createCell(i).setCellValue(headers[i]);
+            }
+
+            int rowIdx = 1;
+            for (PublicHolidayResponseDto dto : data) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(dto.getName());
+                row.createCell(1).setCellValue(dto.getDate());
+                row.createCell(2).setCellValue(dto.getDay());
             }
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
