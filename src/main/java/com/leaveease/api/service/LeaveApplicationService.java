@@ -29,58 +29,97 @@ public class LeaveApplicationService {
         StaffEntity staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
 
+        List<LeaveApplicationEntity> validLeaves = buildValidatedLeaveApplications(staffId, dto, staff, null);
+
+        leaveRepo.saveAll(validLeaves);
+    }
+
+    public void updateLeave(int leaveId, LeaveApplicationRequestDto dto) {
+        LeaveApplicationEntity originalLeave = leaveRepo.findById(leaveId)
+                .orElseThrow(() -> new RuntimeException("Leave application not found"));
+
+        if (!"Pending".equalsIgnoreCase(originalLeave.getStatus())) {
+            throw new RuntimeException("Only pending leave can be updated");
+        }
+
+        StaffEntity staff = staffRepository.findById(originalLeave.getStaffId())
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
+
+
+
+        List<LeaveApplicationEntity> newLeaves = buildValidatedLeaveApplications(
+                originalLeave.getStaffId(), dto, staff, leaveId // exclude self from conflict check
+        );
+
+        leaveRepo.saveAll(newLeaves);
+
+        // Delete the old leave (since we may replace it with multiple new ones)
+        leaveRepo.deleteById(leaveId);
+    }
+
+    private List<LeaveApplicationEntity> buildValidatedLeaveApplications(
+            int staffId,
+            LeaveApplicationRequestDto dto,
+            StaffEntity staff,
+            Integer excludeLeaveId // pass leaveId when updating to skip checking conflict against itself
+    ) {
         LocalDate start = LocalDate.parse(dto.getStartDate());
         LocalDate end = LocalDate.parse(dto.getEndDate());
 
-        // Step 1: Conflict check
-        List<LeaveApplicationEntity> conflictingLeaves = leaveRepo
-                .findByStaffIdAndStatusInAndDateRangeOverlap(staffId, List.of("Pending", "Approved"),
-                        start, end);
+        // Conflict check
+        List<LeaveApplicationEntity> conflicts = leaveRepo
+                .findByStaffIdAndStatusInAndDateRangeOverlap(staffId, List.of("Pending", "Approved"), start, end);
 
-        if (!conflictingLeaves.isEmpty()) {
+        if (excludeLeaveId != null) {
+            conflicts = conflicts.stream()
+                    .filter(lv -> !lv.getLeaveApplicationId().equals(excludeLeaveId))
+                    .collect(Collectors.toList());
+        }
+
+        if (!conflicts.isEmpty()) {
             throw new RuntimeException("Leave application conflicts with existing applied leave. Please cancel and reapply.");
         }
 
+        // Weekend and PH skipping
         List<PublicHolidayEntity> publicHolidays = publicHolidayRepository.findAll();
-        Set<LocalDate> publicHolidayDates = publicHolidays.stream()
+        Set<LocalDate> phDates = publicHolidays.stream()
                 .map(PublicHolidayEntity::getDate)
                 .collect(Collectors.toSet());
 
-        List<LeaveApplicationEntity> validRanges = new ArrayList<>();
+        List<LeaveApplicationEntity> validLeaves = new ArrayList<>();
         List<LocalDate> currentRange = new ArrayList<>();
 
-        // Step 2: Skip holidays & weekends
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             boolean isWeekend = date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY;
-            boolean isPublicHoliday = publicHolidayDates.contains(date);
+            boolean isHoliday = phDates.contains(date);
 
-            if (!isWeekend && !isPublicHoliday) {
+            if (!isWeekend && !isHoliday) {
                 currentRange.add(date);
             } else if (!currentRange.isEmpty()) {
-                validRanges.add(createLeaveEntity(currentRange, staffId, dto, staff));
+                validLeaves.add(createLeaveEntity(currentRange, staffId, dto, staff));
                 currentRange.clear();
             }
         }
 
         if (!currentRange.isEmpty()) {
-            validRanges.add(createLeaveEntity(currentRange, staffId, dto, staff));
+            validLeaves.add(createLeaveEntity(currentRange, staffId, dto, staff));
         }
 
-        if (!validRanges.isEmpty() && validRanges.size() > 1) {
-            for (LeaveApplicationEntity leave : validRanges) {
-                String originalReason = leave.getReason();
-                leave.setReason(originalReason + " (Auto-Split)");
+        // If auto-split happened, update reason
+        if (validLeaves.size() > 1) {
+            for (LeaveApplicationEntity leave : validLeaves) {
+                if(!leave.getReason().endsWith("(Auto-Split)"))
+                {
+                  leave.setReason(leave.getReason() + " (Auto-Split)");
+                }
             }
         }
 
-        if(!validRanges.isEmpty())
-        {
-            leaveRepo.saveAll(validRanges);
-        }
-        else
-        {
+        if (validLeaves.isEmpty()) {
             throw new RuntimeException("The requested leave period includes only non-working days (weekends or public holidays). No leave was submitted.");
         }
+
+        return validLeaves;
     }
 
     private LeaveApplicationEntity createLeaveEntity(List<LocalDate> dates, int staffId,
@@ -95,22 +134,6 @@ public class LeaveApplicationService {
                 ? "Approved" : "Pending");
         entity.setCreatedAt(LocalDate.now());
         return entity;
-    }
-
-    public void updateLeave(int leaveId, LeaveApplicationRequestDto dto) {
-        LeaveApplicationEntity leave = leaveRepo.findById(leaveId)
-                .orElseThrow(() -> new RuntimeException("Leave application not found"));
-
-        if (!"Pending".equalsIgnoreCase(leave.getStatus())) {
-            throw new RuntimeException("Only pending leave can be updated");
-        }
-
-        leave.setLeaveType(dto.getLeaveType());
-        leave.setStartDate(LocalDate.parse(dto.getStartDate()));
-        leave.setEndDate(LocalDate.parse(dto.getEndDate()));
-        leave.setReason(dto.getReason());
-
-        leaveRepo.save(leave);
     }
 
     public void cancelLeave(int leaveId) {
@@ -131,8 +154,17 @@ public class LeaveApplicationService {
         LeaveApplicationEntity leave = leaveRepo.findById(leaveId)
                 .orElseThrow(() -> new RuntimeException("Leave application not found"));
 
-        if (!("Pending".equalsIgnoreCase(leave.getStatus()) || "Approved".equalsIgnoreCase(leave.getStatus())) && status.equalsIgnoreCase("Canceled")) {
-            throw new RuntimeException("Only pending or approved leave can be cancelled");
+        // If trying to cancel
+        if ("Cancelled".equalsIgnoreCase(status)) {
+            // Only allow cancel if current status is Pending or Approved
+            if (!("Pending".equalsIgnoreCase(leave.getStatus()) || "Approved".equalsIgnoreCase(leave.getStatus()))) {
+                throw new RuntimeException("Only pending or approved leaves can be cancelled");
+            }
+
+            // If already approved, ensure it hasn't started yet
+            if ("Approved".equalsIgnoreCase(leave.getStatus()) && !leave.getStartDate().isAfter(LocalDate.now())) {
+                throw new RuntimeException("Approved leave that has already started cannot be cancelled");
+            }
         }
 
         leave.setStatus(status);
