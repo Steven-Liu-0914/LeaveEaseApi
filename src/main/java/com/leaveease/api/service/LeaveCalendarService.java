@@ -27,7 +27,7 @@ public class LeaveCalendarService {
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
         List<LeaveApplicationEntity> applications = leaveRepo
-                .findByStatusAndStartDateBetween("Approved", start, end);
+                .findByStatusAndStartDateBetween(CommonEnums.LeaveStatus.APPROVED.getValue(), start, end);
 
         List<CalendarEventResponseDto> events = new ArrayList<>();
 

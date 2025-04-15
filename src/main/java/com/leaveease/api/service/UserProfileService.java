@@ -31,7 +31,7 @@ public class UserProfileService {
     public void updateProfile(int staffId, UserProfileRequestDto dto) {
         StaffEntity staff = staffRepository.findByStaffId(staffId);
         if (staff == null) {
-            throw new RuntimeException("Staff not found");
+           throw new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage());
         }
 
         staff.setFullName(dto.getFullName());

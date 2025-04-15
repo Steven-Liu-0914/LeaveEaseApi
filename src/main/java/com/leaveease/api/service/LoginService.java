@@ -21,7 +21,7 @@ public class LoginService {
 
     public LoginInfoResponseDto login(LoginRequestDto dto) {
         StaffEntity staff = staffRepository.findByStaffNumber(dto.getStaffNumber())
-                .orElseThrow(() -> new RuntimeException("Invalid staff number or password."));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.LOGIN_INVALID_CREDENTIALS.getMessage()));
 
         String decryptedPassword = dto.getPassword(); // already decrypted from FE
         String expectedHash = hashPassword(decryptedPassword, staff.getPasswordSalt());
@@ -51,7 +51,7 @@ public class LoginService {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error hashing password.");
+           throw new RuntimeException(PASSWORD_HASHING_ERROR.getMessage());
         }
     }
 }

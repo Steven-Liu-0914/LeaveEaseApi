@@ -13,11 +13,11 @@ public class AuthorizationUtil {
 
     public void validateAdminFromHR(int requestedBy) {
         StaffEntity staff = staffRepository.findById(requestedBy)
-                .orElseThrow(() -> new RuntimeException("Unauthorized: Invalid staff."));
+               .orElseThrow(() -> new RuntimeException(ErrorMessages.UNAUTHORIZED_INVALID_STAFF.getMessage()));
 
-        if (!"admin".equalsIgnoreCase(staff.getRole()) ||
-                !"Human Resources".equalsIgnoreCase(staff.getDepartment())) {
-            throw new RuntimeException("Unauthorized: Not an HR admin.");
-        }
+   if (!CommonEnums.StaffRole.ADMIN.getValue().equalsIgnoreCase(staff.getRole()) ||
+            !CommonEnums.Department.HUMAN_RESOURCE.getValue().equalsIgnoreCase(staff.getDepartment())) {
+       throw new RuntimeException(ErrorMessages.UNAUTHORIZED_NOT_HR_ADMIN.getMessage());
+    }
     }
 }

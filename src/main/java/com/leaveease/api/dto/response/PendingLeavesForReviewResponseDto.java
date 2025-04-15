@@ -15,6 +15,6 @@ public class PendingLeavesForReviewResponseDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String reason;
-    private String status = "Pending";
+    private String status = CommonEnums.LeaveStatus.PENDING.getValue();
     private LocalDate createdAt = LocalDate.now();
 }

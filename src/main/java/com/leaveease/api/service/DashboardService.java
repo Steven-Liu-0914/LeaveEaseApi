@@ -38,7 +38,7 @@ public class DashboardService {
 
         // 1. Total approved leave days for this year
         List<LeaveApplicationEntity> approvedThisYear = leaveAppRepo
-                .findByStaffIdAndStatusAndStartDateGreaterThanEqual(staffId, "Approved", firstDayOfYear);
+                .findByStaffIdAndStatusAndStartDateGreaterThanEqual(staffId, CommonEnums.LeaveStatus.APPROVED.getValue(), firstDayOfYear);
 
         int totalAppliedDays = approvedThisYear.stream()
                 .mapToInt(app -> (int) DAYS.between(app.getStartDate(), app.getEndDate()) + 1)
@@ -47,7 +47,7 @@ public class DashboardService {
 
         // 2. Total upcoming approved leave days (from tomorrow onward)
         List<LeaveApplicationEntity> upcoming = leaveAppRepo
-                .findTop10ByStaffIdAndStatusAndStartDateAfter(staffId, "Approved", today);
+                .findTop10ByStaffIdAndStatusAndStartDateAfter(staffId, CommonEnums.LeaveStatus.APPROVED.getValue(), today);
 
         int upcomingLeaveDays = upcoming.stream()
                 .mapToInt(app -> (int) DAYS.between(app.getStartDate(), app.getEndDate()) + 1)
@@ -57,7 +57,7 @@ public class DashboardService {
         // 3. Next upcoming leave (top 10 records)
         List<LeaveApplicationEntity> nextUpcoming = leaveAppRepo
                 .findTop10ByStaffIdAndStatusAndStartDateAfterOrderByStartDateAsc(
-                        staffId, "Approved", today);
+                        staffId, CommonEnums.LeaveStatus.APPROVED.getValue(), today);
         List<LeaveHistoryResponseDto>  mapped_nextUpcoming = nextUpcoming.stream().map(entity->
         {
             LeaveHistoryResponseDto nextUpcomingDto = new LeaveHistoryResponseDto();
@@ -86,12 +86,14 @@ public class DashboardService {
 
 
         //5. Pending Leaves if Staff is Admin of Department
-        StaffEntity staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException("Staff not found"));
-        if ("admin".equalsIgnoreCase(staff.getRole()) && staff.getDepartment() != null) {
-            List<LeaveApplicationEntity> pending = leaveAppRepo
-                    .findByStatusAndStaff_DepartmentAndStaff_RoleOrderByStaff_StaffNumberAsc(
-                            "Pending", staff.getDepartment(), "user"
-                    );
+       StaffEntity staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
+if (CommonEnums.StaffRole.ADMIN.getValue().equalsIgnoreCase(staff.getRole()) && staff.getDepartment() != null) {
+    List<LeaveApplicationEntity> pending = leaveAppRepo
+            .findByStatusAndStaff_DepartmentAndStaff_RoleOrderByStaff_StaffNumberAsc(
+                    CommonEnums.LeaveStatus.PENDING.getValue(), staff.getDepartment(), CommonEnums.StaffRole.USER.getValue()
+            );
+    // Rest of the code remains the same
+}
 
             List<PendingLeavesForReviewResponseDto> mapped_pending = pending.stream().map(entity -> {
                 StaffEntity _staff = staffRepository.findById(entity.getStaffId()).orElse(null);

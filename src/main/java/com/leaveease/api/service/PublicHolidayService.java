@@ -37,7 +37,7 @@ public class PublicHolidayService {
 
     public void update(PublicHolidayRequestDto dto) {
         PublicHolidayEntity entity = repository.findById(dto.getId())
-                .orElseThrow(() -> new RuntimeException("Holiday not found"));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.HOLIDAY_NOT_FOUND.getMessage()));
         entity.setName(dto.getName());
         LocalDate date = LocalDate.parse(dto.getDate());
         entity.setDate(date);

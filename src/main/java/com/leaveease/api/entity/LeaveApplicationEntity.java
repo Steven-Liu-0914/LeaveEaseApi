@@ -29,7 +29,7 @@ public class LeaveApplicationEntity {
 
     private String reason;
 
-    private String status = "Pending";
+    private String status = CommonEnums.LeaveStatus.PENDING.getValue();
 
     private LocalDate createdAt = LocalDate.now();
 }

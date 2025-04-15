@@ -27,7 +27,7 @@ public class LeaveApplicationService {
 
     public void submitLeave(int staffId, LeaveApplicationRequestDto dto) {
         StaffEntity staff = staffRepository.findById(staffId)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
 
         List<LeaveApplicationEntity> validLeaves = buildValidatedLeaveApplications(staffId, dto, staff, null);
 
@@ -36,14 +36,14 @@ public class LeaveApplicationService {
 
     public void updateLeave(int leaveId, LeaveApplicationRequestDto dto) {
         LeaveApplicationEntity originalLeave = leaveRepo.findById(leaveId)
-                .orElseThrow(() -> new RuntimeException("Leave application not found"));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.LEAVE_APPLICATION_NOT_FOUND.getMessage()));
 
-        if (!"Pending".equalsIgnoreCase(originalLeave.getStatus())) {
-            throw new RuntimeException("Only pending leave can be updated");
+        if (!CommonEnums.LeaveStatus.PENDING.getValue().equalsIgnoreCase(originalLeave.getStatus())) {
+            throw new RuntimeException(ErrorMessages.LEAVE_ONLY_PENDING_CAN_UPDATE.getMessage());
         }
 
         StaffEntity staff = staffRepository.findById(originalLeave.getStaffId())
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
 
 
 
@@ -68,7 +68,7 @@ public class LeaveApplicationService {
 
         // Conflict check
         List<LeaveApplicationEntity> conflicts = leaveRepo
-                .findByStaffIdAndStatusInAndDateRangeOverlap(staffId, List.of("Pending", "Approved"), start, end);
+                .findByStaffIdAndStatusInAndDateRangeOverlap(staffId, List.of(CommonEnums.LeaveStatus.PENDING.getValue(), CommonEnums.LeaveStatus.APPROVED.getValue()), start, end);
 
         if (excludeLeaveId != null) {
             conflicts = conflicts.stream()
@@ -77,7 +77,7 @@ public class LeaveApplicationService {
         }
 
         if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Leave application conflicts with existing applied leave. Please cancel and reapply.");
+            throw new RuntimeException(ErrorMessages.LEAVE_CONFLICT_EXISTS.getMessage());
         }
 
         // Weekend and PH skipping
@@ -116,7 +116,7 @@ public class LeaveApplicationService {
         }
 
         if (validLeaves.isEmpty()) {
-            throw new RuntimeException("The requested leave period includes only non-working days (weekends or public holidays). No leave was submitted.");
+            throw new RuntimeException(ErrorMessages.LEAVE_ONLY_NONWORKING_DAYS.getMessage());
         }
 
         return validLeaves;
@@ -130,40 +130,40 @@ public class LeaveApplicationService {
         entity.setStartDate(dates.get(0));
         entity.setEndDate(dates.get(dates.size() - 1));
         entity.setReason(dto.getReason());
-        entity.setStatus("admin".equalsIgnoreCase(staff.getRole()) && staff.getDepartment() != null
-                ? "Approved" : "Pending");
+        entity.setStatus(CommonEnums.StaffRole.ADMIN.getValue().equalsIgnoreCase(staff.getRole()) && staff.getDepartment() != null
+                ? CommonEnums.LeaveStatus.APPROVED.getValue() : CommonEnums.LeaveStatus.PENDING.getValue());
         entity.setCreatedAt(LocalDate.now());
         return entity;
     }
 
     public void cancelLeave(int leaveId) {
-        setLeaveStatus(leaveId, "Cancelled");
+        setLeaveStatus(leaveId, CommonEnums.LeaveStatus.CANCELLED.getValue());
     }
 
     public void approveLeave(int leaveId)
     {
-        setLeaveStatus(leaveId, "Approved");
+        setLeaveStatus(leaveId, CommonEnums.LeaveStatus.APPROVED.getValue());
     }
 
    public void rejectLeave(int leaveId)
    {
-       setLeaveStatus(leaveId, "Rejected");
+       setLeaveStatus(leaveId, CommonEnums.LeaveStatus.REJECTED.getValue());
    }
 
     public void setLeaveStatus(int leaveId, String status) {
         LeaveApplicationEntity leave = leaveRepo.findById(leaveId)
-                .orElseThrow(() -> new RuntimeException("Leave application not found"));
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.LEAVE_APPLICATION_NOT_FOUND.getMessage()));
 
         // If trying to cancel
-        if ("Cancelled".equalsIgnoreCase(status)) {
+        if (CommonEnums.LeaveStatus.CANCELLED.getValue().equalsIgnoreCase(status)) {
             // Only allow cancel if current status is Pending or Approved
-            if (!("Pending".equalsIgnoreCase(leave.getStatus()) || "Approved".equalsIgnoreCase(leave.getStatus()))) {
-                throw new RuntimeException("Only pending or approved leaves can be cancelled");
+            if (!(CommonEnums.LeaveStatus.PENDING.getValue().equalsIgnoreCase(leave.getStatus()) || CommonEnums.LeaveStatus.APPROVED.getValue().equalsIgnoreCase(leave.getStatus()))) {
+                throw new RuntimeException(ErrorMessages.LEAVE_ONLY_PENDING_APPROVED_CAN_CANCEL.getMessage());
             }
 
             // If already approved, ensure it hasn't started yet
-            if ("Approved".equalsIgnoreCase(leave.getStatus()) && !leave.getStartDate().isAfter(LocalDate.now())) {
-                throw new RuntimeException("Approved leave that has already started cannot be cancelled");
+            if (CommonEnums.LeaveStatus.APPROVED.getValue().equalsIgnoreCase(leave.getStatus()) && !leave.getStartDate().isAfter(LocalDate.now())) {
+                throw new RuntimeException(ErrorMessages.LEAVE_ALREADY_STARTED.getMessage());
             }
         }
 
