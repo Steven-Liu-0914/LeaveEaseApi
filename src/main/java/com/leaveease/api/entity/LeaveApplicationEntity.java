@@ -1,5 +1,6 @@
 package com.leaveease.api.entity;
 
+import com.leaveease.api.util.CommonEnums;
 import jakarta.persistence.*;
 import lombok.Data;
 

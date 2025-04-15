@@ -6,6 +6,7 @@ import com.leaveease.api.dto.response.PublicHolidayResponseDto;
 import com.leaveease.api.dto.response.ReportAnalysisResponseDto;
 import com.leaveease.api.entity.PublicHolidayEntity;
 import com.leaveease.api.repository.PublicHolidayRepository;
+import com.leaveease.api.util.ErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

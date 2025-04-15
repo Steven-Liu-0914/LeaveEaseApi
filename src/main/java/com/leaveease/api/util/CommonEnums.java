@@ -9,10 +9,10 @@ public class CommonEnums {
      * Represents the possible statuses of a leave application
      */
     public enum LeaveStatus {
-        APPROVED(CommonEnums.LeaveStatus.APPROVED.getValue()),
-        REJECTED(CommonEnums.LeaveStatus.REJECTED.getValue()),
-        CANCELLED(CommonEnums.LeaveStatus.CANCELLED.getValue()),
-        PENDING(CommonEnums.LeaveStatus.PENDING.getValue());
+        APPROVED("Approved"),
+        REJECTED("Rejected"),
+        CANCELLED("Cancelled"),
+        PENDING("Pending");
 
         private final String value;
 
@@ -23,7 +23,7 @@ public class CommonEnums {
         public String getValue() {
             return value;
         }
-        
+
         @Override
         public String toString() {
             return value;
@@ -34,8 +34,8 @@ public class CommonEnums {
      * Represents the possible roles of staff members
      */
     public enum StaffRole {
-        ADMIN(CommonEnums.StaffRole.ADMIN.getValue()),
-        USER("User"),
+        ADMIN("Admin"),
+        USER("User");
 
         private final String value;
 
@@ -46,7 +46,7 @@ public class CommonEnums {
         public String getValue() {
             return value;
         }
-        
+
         @Override
         public String toString() {
             return value;
@@ -57,10 +57,10 @@ public class CommonEnums {
      * Represents the possible types of leave
      */
     public enum LeaveType {
-        CHILDREN(CommonEnums.LeaveType.CHILDREN.getValue()),
-        ANNUAL(CommonEnums.LeaveType.ANNUAL.getValue()),
-        SICK(CommonEnums.LeaveType.SICK.getValue()),
-        EMERGENCY(CommonEnums.LeaveType.EMERGENCY.getValue());
+        CHILDREN("Children"),
+        ANNUAL("Annual"),
+        SICK("Sick"),
+        EMERGENCY("Emergency");
 
         private final String value;
 
@@ -71,7 +71,7 @@ public class CommonEnums {
         public String getValue() {
             return value;
         }
-        
+
         @Override
         public String toString() {
             return value;
@@ -82,7 +82,7 @@ public class CommonEnums {
      * Represents the possible departments in the organization
      */
     public enum Department {
-        HUMAN_RESOURCE(CommonEnums.Department.HUMAN_RESOURCE.getValue()),
+        HUMAN_RESOURCE("Human Resources"),
         ENGINEERING("Engineering"),
         FINANCE("Finance"),
         OPERATIONS("Operations"),
@@ -97,7 +97,7 @@ public class CommonEnums {
         public String getValue() {
             return value;
         }
-        
+
         @Override
         public String toString() {
             return value;

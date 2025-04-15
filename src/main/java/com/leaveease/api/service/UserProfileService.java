@@ -4,6 +4,7 @@ import com.leaveease.api.dto.request.UserProfileRequestDto;
 import com.leaveease.api.dto.response.UserProfileResponseDto;
 import com.leaveease.api.entity.StaffEntity;
 import com.leaveease.api.repository.StaffRepository;
+import com.leaveease.api.util.ErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

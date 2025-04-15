@@ -10,11 +10,14 @@ import com.leaveease.api.entity.StaffEntity;
 import com.leaveease.api.repository.LeaveApplicationRepository;
 import com.leaveease.api.repository.LeaveQuotaRepository;
 import com.leaveease.api.repository.StaffRepository;
+import com.leaveease.api.util.CommonEnums;
+import com.leaveease.api.util.ErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -86,14 +89,26 @@ public class DashboardService {
 
 
         //5. Pending Leaves if Staff is Admin of Department
-       StaffEntity staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
-if (CommonEnums.StaffRole.ADMIN.getValue().equalsIgnoreCase(staff.getRole()) && staff.getDepartment() != null) {
-    List<LeaveApplicationEntity> pending = leaveAppRepo
-            .findByStatusAndStaff_DepartmentAndStaff_RoleOrderByStaff_StaffNumberAsc(
-                    CommonEnums.LeaveStatus.PENDING.getValue(), staff.getDepartment(), CommonEnums.StaffRole.USER.getValue()
-            );
-    // Rest of the code remains the same
-}
+        StaffEntity staff = staffRepository.findById(staffId)
+                .orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
+
+        List<LeaveApplicationEntity> pending = new ArrayList<>();
+
+        if (CommonEnums.StaffRole.ADMIN.getValue().equalsIgnoreCase(staff.getRole())) {
+            if ("Human Resources".equalsIgnoreCase(staff.getDepartment())) {
+                // HR Admin sees all pending leave from all departments
+                pending = leaveAppRepo.findByStatusAndStaff_RoleOrderByStaff_StaffNumberAsc(
+                        CommonEnums.LeaveStatus.PENDING.getValue(), CommonEnums.StaffRole.USER.getValue()
+                );
+            } else if (staff.getDepartment() != null) {
+                // Department Admin sees pending leave of their own department
+                pending = leaveAppRepo.findByStatusAndStaff_DepartmentAndStaff_RoleOrderByStaff_StaffNumberAsc(
+                        CommonEnums.LeaveStatus.PENDING.getValue(),
+                        staff.getDepartment(),
+                        CommonEnums.StaffRole.USER.getValue()
+                );
+            }
+        }
 
             List<PendingLeavesForReviewResponseDto> mapped_pending = pending.stream().map(entity -> {
                 StaffEntity _staff = staffRepository.findById(entity.getStaffId()).orElse(null);
@@ -116,7 +131,7 @@ if (CommonEnums.StaffRole.ADMIN.getValue().equalsIgnoreCase(staff.getRole()) && 
             }).toList();
 
             dto.setPendingApproveLeave(mapped_pending);
-        }
+
         return dto;
     }
 

@@ -7,6 +7,7 @@ import com.leaveease.api.entity.StaffEntity;
 import com.leaveease.api.repository.LeaveApplicationRepository;
 import com.leaveease.api.repository.PublicHolidayRepository;
 import com.leaveease.api.repository.StaffRepository;
+import com.leaveease.api.util.CommonEnums;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

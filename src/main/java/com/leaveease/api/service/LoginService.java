@@ -4,6 +4,7 @@ import com.leaveease.api.dto.request.LoginRequestDto;
 import com.leaveease.api.dto.response.LoginInfoResponseDto;
 import com.leaveease.api.entity.StaffEntity;
 import com.leaveease.api.repository.StaffRepository;
+import com.leaveease.api.util.ErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import static com.leaveease.api.util.ErrorMessages.LOGIN_INVALID_CREDENTIALS;
+import static com.leaveease.api.util.ErrorMessages.PASSWORD_HASHING_ERROR;
 
 @Service
 @RequiredArgsConstructor

@@ -1,6 +1,7 @@
 
 package com.leaveease.api.dto.response;
 
+import com.leaveease.api.util.CommonEnums;
 import lombok.Data;
 
 import java.time.LocalDate;

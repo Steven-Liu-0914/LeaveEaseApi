@@ -32,6 +32,9 @@ public interface LeaveApplicationRepository extends JpaRepository<LeaveApplicati
 
     List<LeaveApplicationEntity> findByStatusAndStartDateBetween(String status, LocalDate start, LocalDate end);
 
+    List<LeaveApplicationEntity> findByStatusAndStaff_RoleOrderByStaff_StaffNumberAsc(
+            String status, String role);
+
     @Query("SELECT l FROM LeaveApplicationEntity l " +
             "WHERE l.staffId = :staffId AND l.status IN :statuses " +
             "AND l.startDate <= :endDate AND l.endDate >= :startDate")
