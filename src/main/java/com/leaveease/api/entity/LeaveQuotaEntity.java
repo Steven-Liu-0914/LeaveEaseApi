@@ -24,7 +24,7 @@ public class LeaveQuotaEntity {
     private int emergency;
 
     // 🧩 New: Join with StaffEntity
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staffId", referencedColumnName = "staffId", insertable = false, updatable = false)
     private StaffEntity staff;
 }
