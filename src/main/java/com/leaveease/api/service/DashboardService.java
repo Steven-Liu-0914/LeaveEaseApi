@@ -87,6 +87,35 @@ public class DashboardService {
         int remainingLeave = totalQuota - totalAppliedDays;
         dto.setRemainingLeave(Math.max(remainingLeave, 0)); // ensure non-negative
 
+        List<DashboardResponseDto.RemainingLeaveDetail> remainingDetails = new ArrayList<>();
+
+        int usedAnnual = getUsedDaysByType(approvedThisYear, String.valueOf(CommonEnums.LeaveType.ANNUAL));
+        int usedSick = getUsedDaysByType(approvedThisYear, String.valueOf(CommonEnums.LeaveType.SICK));
+        int usedChildren = getUsedDaysByType(approvedThisYear, String.valueOf(CommonEnums.LeaveType.CHILDREN));
+        int usedEmergency = getUsedDaysByType(approvedThisYear, String.valueOf(CommonEnums.LeaveType.EMERGENCY));
+
+        DashboardResponseDto.RemainingLeaveDetail annual = new DashboardResponseDto.RemainingLeaveDetail();
+        annual.setType(String.valueOf(CommonEnums.LeaveType.ANNUAL));
+        annual.setRemaining(Math.max(quota.getAnnual() - usedAnnual, 0));
+
+        DashboardResponseDto.RemainingLeaveDetail sick = new DashboardResponseDto.RemainingLeaveDetail();
+        sick.setType(String.valueOf(CommonEnums.LeaveType.SICK));
+        sick.setRemaining(Math.max(quota.getSick() - usedSick, 0));
+
+        DashboardResponseDto.RemainingLeaveDetail children = new DashboardResponseDto.RemainingLeaveDetail();
+        children.setType(String.valueOf(CommonEnums.LeaveType.CHILDREN));
+        children.setRemaining(Math.max(quota.getChildren() - usedChildren, 0));
+
+        DashboardResponseDto.RemainingLeaveDetail emergency = new DashboardResponseDto.RemainingLeaveDetail();
+        emergency.setType(String.valueOf(CommonEnums.LeaveType.EMERGENCY));
+        emergency.setRemaining(Math.max(quota.getEmergency() - usedEmergency, 0));
+
+        remainingDetails.add(annual);
+        remainingDetails.add(sick);
+        remainingDetails.add(children);
+        remainingDetails.add(emergency);
+
+        dto.setRemainingDetails(remainingDetails);
 
         //5. Pending Leaves if Staff is Admin of Department
         StaffEntity staff = staffRepository.findById(staffId)
@@ -133,6 +162,13 @@ public class DashboardService {
             dto.setPendingApproveLeave(mapped_pending);
 
         return dto;
+    }
+
+    private int getUsedDaysByType(List<LeaveApplicationEntity> list, String type) {
+        return list.stream()
+                .filter(l -> l.getLeaveType().equalsIgnoreCase(type))
+                .mapToInt(l -> (int) DAYS.between(l.getStartDate(), l.getEndDate()) + 1)
+                .sum();
     }
 
 }

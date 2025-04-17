@@ -25,7 +25,7 @@ public class LoginService {
         StaffEntity staff = staffRepository.findByStaffNumber(dto.getStaffNumber())
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.LOGIN_INVALID_CREDENTIALS.getMessage()));
 
-        String decryptedPassword = dto.getPassword(); // already decrypted from FE
+        String decryptedPassword = dto.getPassword();
         String expectedHash = hashPassword(decryptedPassword, staff.getPasswordSalt());
 
         if (!expectedHash.equals(staff.getPasswordHash())) {

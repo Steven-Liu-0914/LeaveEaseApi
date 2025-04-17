@@ -20,11 +20,11 @@ public class ReportAnalysisRepositoryImpl implements ReportAnalysisRepository {
     @Override
     public List<ReportAnalysisResponseDto> searchAnalysis(ReportAnalysisRequestDto request) {
         StringBuilder sql = new StringBuilder("SELECT s.staffId, s.staffNumber, s.fullName, s.department, ");
-        sql.append("SUM(CASE WHEN la.leaveType = 'Children Leave' THEN 1 ELSE 0 END) as takenChildren, ");
-        sql.append("SUM(CASE WHEN la.leaveType = 'Annual Leave' THEN 1 ELSE 0 END) as takenAnnual, ");
-        sql.append("SUM(CASE WHEN la.leaveType = 'Sick Leave' THEN 1 ELSE 0 END) as takenSick, ");
-        sql.append("SUM(CASE WHEN la.leaveType = 'Emergency Leave' THEN 1 ELSE 0 END) as takenEmergency, ");
-        sql.append("COUNT(*) as total ");
+        sql.append("SUM(CASE WHEN la.leaveType = 'Children Leave' THEN DATEDIFF(la.endDate, la.startDate) + 1 ELSE 0 END) as takenChildren, ");
+        sql.append("SUM(CASE WHEN la.leaveType = 'Annual Leave' THEN DATEDIFF(la.endDate, la.startDate) + 1 ELSE 0 END) as takenAnnual, ");
+        sql.append("SUM(CASE WHEN la.leaveType = 'Sick Leave' THEN DATEDIFF(la.endDate, la.startDate) + 1 ELSE 0 END) as takenSick, ");
+        sql.append("SUM(CASE WHEN la.leaveType = 'Emergency Leave' THEN DATEDIFF(la.endDate, la.startDate) + 1 ELSE 0 END) as takenEmergency, ");
+        sql.append("SUM(DATEDIFF(la.endDate, la.startDate) + 1) as total ");
         sql.append("FROM LeaveApplication la ");
         sql.append("JOIN Staff s ON s.staffId = la.staffId ");
         sql.append("WHERE la.status = 'Approved' AND la.leaveType IN ('Children Leave', 'Annual Leave', 'Sick Leave', 'Emergency Leave')");

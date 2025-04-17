@@ -44,4 +44,7 @@ public interface LeaveApplicationRepository extends JpaRepository<LeaveApplicati
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("SELECT l FROM LeaveApplicationEntity l WHERE l.startDate <= :ph AND l.endDate >= :ph")
+    List<LeaveApplicationEntity> findByDateRangeIncluding(@Param("ph") LocalDate ph);
 }

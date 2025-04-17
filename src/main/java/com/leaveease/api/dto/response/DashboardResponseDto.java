@@ -12,4 +12,12 @@ public class DashboardResponseDto {
     private int totalApplied;
     private List<LeaveHistoryResponseDto> nextUpcomingLeave;
     private List<PendingLeavesForReviewResponseDto> pendingApproveLeave;
+    // New field
+    private List<RemainingLeaveDetail> remainingDetails;
+
+    @Data
+    public static class RemainingLeaveDetail {
+        private String type;
+        private int remaining;
+    }
 }

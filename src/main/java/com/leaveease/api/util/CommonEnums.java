@@ -57,10 +57,10 @@ public class CommonEnums {
      * Represents the possible types of leave
      */
     public enum LeaveType {
-        CHILDREN("Children"),
-        ANNUAL("Annual"),
-        SICK("Sick"),
-        EMERGENCY("Emergency");
+        CHILDREN("Children Leave"),
+        ANNUAL("Annual Leave"),
+        SICK("Sick Leave"),
+        EMERGENCY("Emergency Leave");
 
         private final String value;
 
