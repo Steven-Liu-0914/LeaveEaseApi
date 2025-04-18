@@ -47,4 +47,12 @@ public interface LeaveApplicationRepository extends JpaRepository<LeaveApplicati
 
     @Query("SELECT l FROM LeaveApplicationEntity l WHERE l.startDate <= :ph AND l.endDate >= :ph")
     List<LeaveApplicationEntity> findByDateRangeIncluding(@Param("ph") LocalDate ph);
+
+    @Query("SELECT l FROM LeaveApplicationEntity l WHERE l.staffId = :staffId AND l.leaveType = :leaveType AND l.status IN :statuses AND YEAR(l.startDate) = :year")
+    List<LeaveApplicationEntity> findByStaffIdAndLeaveTypeAndStatusInAndYear(
+            @Param("staffId") int staffId,
+            @Param("leaveType") String leaveType,
+            @Param("statuses") List<String> statuses,
+            @Param("year") int year
+    );
 }

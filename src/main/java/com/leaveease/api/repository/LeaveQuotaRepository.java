@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface LeaveQuotaRepository extends JpaRepository<LeaveQuotaEntity, Integer> {
     LeaveQuotaEntity findByStaffId(int staffId);
     List<LeaveQuotaEntity> findAllByOrderByStaff_DepartmentAscStaff_FullNameAsc();
+
 }

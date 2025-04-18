@@ -116,5 +116,4 @@ INSERT INTO leaveApplication
 VALUES
     (2, 'Annual Leave', '2025-04-14', '2025-04-16', 'HOLIDAY', 'Approved'),
     (2, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Approved'),
-    (4, 'Annual Leave', '2025-04-01', '2025-04-04', 'Daniel on Holiday', 'Approved'),
     (4, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Pending')

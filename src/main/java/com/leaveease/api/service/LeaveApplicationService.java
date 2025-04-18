@@ -2,9 +2,11 @@ package com.leaveease.api.service;
 
 import com.leaveease.api.dto.request.LeaveApplicationRequestDto;
 import com.leaveease.api.entity.LeaveApplicationEntity;
+import com.leaveease.api.entity.LeaveQuotaEntity;
 import com.leaveease.api.entity.PublicHolidayEntity;
 import com.leaveease.api.entity.StaffEntity;
 import com.leaveease.api.repository.LeaveApplicationRepository;
+import com.leaveease.api.repository.LeaveQuotaRepository;
 import com.leaveease.api.repository.PublicHolidayRepository;
 import com.leaveease.api.repository.StaffRepository;
 import com.leaveease.api.util.CommonEnums;
@@ -14,9 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,13 +27,13 @@ public class LeaveApplicationService {
     private final LeaveApplicationRepository leaveRepo;
     private final StaffRepository staffRepository;
     private final PublicHolidayRepository publicHolidayRepository;
+    private final LeaveQuotaRepository leaveQuotaRepository;
 
     public void submitLeave(int staffId, LeaveApplicationRequestDto dto) {
         StaffEntity staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
 
         List<LeaveApplicationEntity> validLeaves = buildValidatedLeaveApplications(staffId, dto, staff, null);
-
         leaveRepo.saveAll(validLeaves);
     }
 
@@ -47,15 +48,11 @@ public class LeaveApplicationService {
         StaffEntity staff = staffRepository.findById(originalLeave.getStaffId())
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.STAFF_NOT_FOUND.getMessage()));
 
-
-
         List<LeaveApplicationEntity> newLeaves = buildValidatedLeaveApplications(
-                originalLeave.getStaffId(), dto, staff, leaveId // exclude self from conflict check
+                originalLeave.getStaffId(), dto, staff, leaveId
         );
 
         leaveRepo.saveAll(newLeaves);
-
-        // Delete the old leave (since we may replace it with multiple new ones)
         leaveRepo.deleteById(leaveId);
     }
 
@@ -63,14 +60,31 @@ public class LeaveApplicationService {
             int staffId,
             LeaveApplicationRequestDto dto,
             StaffEntity staff,
-            Integer excludeLeaveId // pass leaveId when updating to skip checking conflict against itself
+            Integer excludeLeaveId
     ) {
         LocalDate start = LocalDate.parse(dto.getStartDate());
         LocalDate end = LocalDate.parse(dto.getEndDate());
 
-        // Conflict check
+        checkConflict(staffId, start, end, excludeLeaveId);
+
+        List<LeaveApplicationEntity> validLeaves = generateValidLeaves(start, end, staffId, dto, staff);
+
+        if (validLeaves.isEmpty()) {
+            throw new RuntimeException(ErrorMessages.LEAVE_ONLY_NONWORKING_DAYS.getMessage());
+        }
+
+        enforceQuotaValidation(staffId, dto.getLeaveType(), validLeaves, excludeLeaveId);
+
+        return validLeaves;
+    }
+
+    private void checkConflict(int staffId, LocalDate start, LocalDate end, Integer excludeLeaveId) {
         List<LeaveApplicationEntity> conflicts = leaveRepo
-                .findByStaffIdAndStatusInAndDateRangeOverlap(staffId, List.of(CommonEnums.LeaveStatus.PENDING.getValue(), CommonEnums.LeaveStatus.APPROVED.getValue()), start, end);
+                .findByStaffIdAndStatusInAndDateRangeOverlap(
+                        staffId,
+                        List.of(CommonEnums.LeaveStatus.PENDING.getValue(), CommonEnums.LeaveStatus.APPROVED.getValue()),
+                        start, end
+                );
 
         if (excludeLeaveId != null) {
             conflicts = conflicts.stream()
@@ -81,14 +95,17 @@ public class LeaveApplicationService {
         if (!conflicts.isEmpty()) {
             throw new RuntimeException(ErrorMessages.LEAVE_CONFLICT_EXISTS.getMessage());
         }
+    }
 
-        // Weekend and PH skipping
-        List<PublicHolidayEntity> publicHolidays = publicHolidayRepository.findAll();
-        Set<LocalDate> phDates = publicHolidays.stream()
+    private List<LeaveApplicationEntity> generateValidLeaves(
+            LocalDate start, LocalDate end, int staffId,
+            LeaveApplicationRequestDto dto, StaffEntity staff) {
+
+        Set<LocalDate> phDates = publicHolidayRepository.findAll().stream()
                 .map(PublicHolidayEntity::getDate)
                 .collect(Collectors.toSet());
 
-        List<LeaveApplicationEntity> validLeaves = new ArrayList<>();
+        List<LeaveApplicationEntity> result = new ArrayList<>();
         List<LocalDate> currentRange = new ArrayList<>();
 
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
@@ -98,30 +115,69 @@ public class LeaveApplicationService {
             if (!isWeekend && !isHoliday) {
                 currentRange.add(date);
             } else if (!currentRange.isEmpty()) {
-                validLeaves.add(createLeaveEntity(currentRange, staffId, dto, staff));
+                result.add(createLeaveEntity(currentRange, staffId, dto, staff));
                 currentRange.clear();
             }
         }
 
         if (!currentRange.isEmpty()) {
-            validLeaves.add(createLeaveEntity(currentRange, staffId, dto, staff));
+            result.add(createLeaveEntity(currentRange, staffId, dto, staff));
         }
 
-        // If auto-split happened, update reason
-        if (validLeaves.size() > 1) {
-            for (LeaveApplicationEntity leave : validLeaves) {
-                if(!leave.getReason().endsWith("(Auto-Split)"))
-                {
-                  leave.setReason(leave.getReason() + " (Auto-Split)");
+        if (result.size() > 1) {
+            for (LeaveApplicationEntity leave : result) {
+                if (!leave.getReason().endsWith("(Auto-Split)")) {
+                    leave.setReason(leave.getReason() + " (Auto-Split)");
                 }
             }
         }
 
-        if (validLeaves.isEmpty()) {
-            throw new RuntimeException(ErrorMessages.LEAVE_ONLY_NONWORKING_DAYS.getMessage());
-        }
+        return result;
+    }
 
-        return validLeaves;
+    private void enforceQuotaValidation(int staffId, String leaveType, List<LeaveApplicationEntity> newLeaves, Integer excludeLeaveId) {
+        int requestedDays = newLeaves.stream()
+                .mapToInt(lv -> (int) ChronoUnit.DAYS.between(lv.getStartDate(), lv.getEndDate()) + 1)
+                .sum();
+
+        LeaveQuotaEntity quota = leaveQuotaRepository.findByStaffId(staffId);
+
+
+        int currentYear = LocalDate.now().getYear();
+
+        List<LeaveApplicationEntity> usedLeaves = leaveRepo
+                .findByStaffIdAndLeaveTypeAndStatusInAndYear(
+                        staffId,
+                        leaveType,
+                        List.of(CommonEnums.LeaveStatus.PENDING.getValue(), CommonEnums.LeaveStatus.APPROVED.getValue()),
+                        currentYear
+                );
+
+        int usedDays = usedLeaves.stream()
+                .filter(lv -> excludeLeaveId == null || !lv.getLeaveApplicationId().equals(excludeLeaveId))
+                .mapToInt(lv -> (int) ChronoUnit.DAYS.between(lv.getStartDate(), lv.getEndDate()) + 1)
+                .sum();
+
+        int quotaForType = getQuotaForType(leaveType, quota);
+        int remainingDays = quotaForType - usedDays;
+
+        if (requestedDays > remainingDays) {
+            throw new RuntimeException(ErrorMessages.LEAVE_QUOTA_EXCEEDED.getMessage());
+        }
+    }
+
+    private int getQuotaForType(String leaveType, LeaveQuotaEntity quota) {
+        if (leaveType.equals(CommonEnums.LeaveType.ANNUAL.getValue())) {
+            return quota.getAnnual();
+        } else if (leaveType.equals(CommonEnums.LeaveType.SICK.getValue())) {
+            return quota.getSick();
+        } else if (leaveType.equals(CommonEnums.LeaveType.EMERGENCY.getValue())) {
+            return quota.getEmergency();
+        } else if (leaveType.equals(CommonEnums.LeaveType.CHILDREN.getValue())) {
+            return quota.getChildren();
+        } else {
+            throw new RuntimeException("Unsupported leave type: " + leaveType);
+        }
     }
 
     private LeaveApplicationEntity createLeaveEntity(List<LocalDate> dates, int staffId,
@@ -142,29 +198,26 @@ public class LeaveApplicationService {
         setLeaveStatus(leaveId, CommonEnums.LeaveStatus.CANCELLED.getValue());
     }
 
-    public void approveLeave(int leaveId)
-    {
+    public void approveLeave(int leaveId) {
         setLeaveStatus(leaveId, CommonEnums.LeaveStatus.APPROVED.getValue());
     }
 
-   public void rejectLeave(int leaveId)
-   {
-       setLeaveStatus(leaveId, CommonEnums.LeaveStatus.REJECTED.getValue());
-   }
+    public void rejectLeave(int leaveId) {
+        setLeaveStatus(leaveId, CommonEnums.LeaveStatus.REJECTED.getValue());
+    }
 
     public void setLeaveStatus(int leaveId, String status) {
         LeaveApplicationEntity leave = leaveRepo.findById(leaveId)
                 .orElseThrow(() -> new RuntimeException(ErrorMessages.LEAVE_APPLICATION_NOT_FOUND.getMessage()));
 
-        // If trying to cancel
         if (CommonEnums.LeaveStatus.CANCELLED.getValue().equalsIgnoreCase(status)) {
-            // Only allow cancel if current status is Pending or Approved
-            if (!(CommonEnums.LeaveStatus.PENDING.getValue().equalsIgnoreCase(leave.getStatus()) || CommonEnums.LeaveStatus.APPROVED.getValue().equalsIgnoreCase(leave.getStatus()))) {
+            if (!(CommonEnums.LeaveStatus.PENDING.getValue().equalsIgnoreCase(leave.getStatus())
+                    || CommonEnums.LeaveStatus.APPROVED.getValue().equalsIgnoreCase(leave.getStatus()))) {
                 throw new RuntimeException(ErrorMessages.LEAVE_ONLY_PENDING_APPROVED_CAN_CANCEL.getMessage());
             }
 
-            // If already approved, ensure it hasn't started yet
-            if (CommonEnums.LeaveStatus.APPROVED.getValue().equalsIgnoreCase(leave.getStatus()) && !leave.getStartDate().isAfter(LocalDate.now())) {
+            if (CommonEnums.LeaveStatus.APPROVED.getValue().equalsIgnoreCase(leave.getStatus())
+                    && !leave.getStartDate().isAfter(LocalDate.now())) {
                 throw new RuntimeException(ErrorMessages.LEAVE_ALREADY_STARTED.getMessage());
             }
         }

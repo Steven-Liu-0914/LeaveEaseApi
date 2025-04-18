@@ -22,7 +22,8 @@ public enum ErrorMessages {
     LEAVE_ONLY_NONWORKING_DAYS("The requested leave period includes only non-working days (weekends or public holidays). No leave was submitted."),
     LEAVE_ONLY_PENDING_APPROVED_CAN_CANCEL("Only pending or approved leaves can be cancelled"),
     LEAVE_ALREADY_STARTED("Approved leave that has already started cannot be cancelled"),
-    
+    LEAVE_QUOTA_EXCEEDED("Your remaining quota for this leave type is insufficient, including pending applications. Please cancel or adjust existing leave before submitting a new request."),
+    LEAVE_QUOTA_NOT_FOUND("Leave quota not found for this staff and leave type in the current year."),
     // Holiday related errors
     HOLIDAY_NOT_FOUND("Holiday not found"),
     
