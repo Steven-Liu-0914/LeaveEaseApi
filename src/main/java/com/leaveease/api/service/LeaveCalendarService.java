@@ -38,7 +38,7 @@ public class LeaveCalendarService {
                 CalendarEventResponseDto dto = new CalendarEventResponseDto();
                 dto.setStart(app.getStartDate().toString());
                 dto.setEnd(app.getEndDate().toString());
-                dto.setTitle(staff.getFullName() + " - " + app.getLeaveType());
+                dto.setTitle(staff.getFullName() + " ("+staff.getDepartment()+")" + " - " + app.getLeaveType());
                 events.add(dto);
             }
         }

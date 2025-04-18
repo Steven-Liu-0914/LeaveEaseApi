@@ -78,11 +78,11 @@ FROM staff;
 INSERT INTO staff
 (StaffNumber, FullName, Email, Phone, Department, JobTitle, PasswordHash, PasswordSalt, Role)
 VALUES
-    ('Amy', 'Amy Tan', 'amy.tan@example.com', '81234567', 'Marketing', 'Executive', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'user'),
-    ('Bob', 'Bob Lim', 'bob.lim@example.com', '81234568', 'Marketing', 'Manager', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'admin'),
-    ('Cindy', 'Cindy Goh', 'cindy.goh@example.com', '81234569', 'Human Resources', 'HR Admin', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'admin');
-
--- INSERT Leave Quota for Amy, Bob, and Cindy
+    ('A001', 'Amy Tan', 'amy.tan@example.com', '81234567', 'Marketing', 'Executive', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'user'),
+    ('B001', 'Bob Lim', 'bob.lim@example.com', '81234568', 'Marketing', 'Manager', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'admin'),
+    ('C001', 'Cindy Goh', 'cindy.goh@example.com', '81234569', 'Human Resources', 'HR Admin', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'admin'),
+    ('D001', 'Daniel Smith', 'daniel.smith@example.com', '82223645', 'Engineering', 'Technician', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'user');
+-- INSERT Leave Quota for Amy, Bob, Cindy, Daniel
 
 INSERT INTO leaveQuota (StaffId, Annual, Children, Sick, Emergency) VALUES
 -- Amy
@@ -90,8 +90,9 @@ INSERT INTO leaveQuota (StaffId, Annual, Children, Sick, Emergency) VALUES
 -- Bob
 (2, 16, 5, 14, 5),
 -- Cindy
-(3, 16, 5, 14, 5);
-
+(3, 16, 5, 14, 5),
+-- Daniel
+(4, 10, 5, 14, 5);
 
 -- 8. Insert public holidays for 2025
 
@@ -109,9 +110,11 @@ INSERT INTO publicholiday (Name, Date, Day) VALUES
                                                 ('Christmas Day', '2025-12-25', 'Thursday');
 
 
--- 9. INSERT sample Leave Applications
+-- 8. INSERT sample Leave Applications
 INSERT INTO leaveApplication
 (StaffId, LeaveType, StartDate, EndDate, Reason, Status)
 VALUES
     (2, 'Annual Leave', '2025-04-14', '2025-04-16', 'HOLIDAY', 'Approved'),
-    (2, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Approved')
+    (2, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Approved'),
+    (4, 'Annual Leave', '2025-04-01', '2025-04-04', 'Daniel on Holiday', 'Approved'),
+    (4, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Pending')
