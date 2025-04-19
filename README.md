@@ -1,6 +1,8 @@
-# LeaveEase.UI (Frontend)
+# LeaveEase-API (Backend)
 
-This is the frontend of the **LeaveEase** HR leave management system, developed with Angular 17 and styled using Tailwind CSS. It supports three user roles — Normal Staff, Department Manager, and HR Admin — each with tailored functionalities.
+This is the backend of the **LeaveEase** HR leave management system, developed using **Spring Boot** with **JDK 17**, and built as a RESTful API. It provides business logic and database interactions for all user types — Normal Staff, Department Manager, and HR Admin.
+
+---
 
 ## 🚀 Option 1 – Run via Docker (Recommended)
 
@@ -9,8 +11,8 @@ This is the frontend of the **LeaveEase** HR leave management system, developed 
 - PowerShell (for Windows script execution)
 
 ### Steps
-1. **Download** the Docker archive from: [https://drive.google.com/file/d/1x1jPuMxBbTs8C97wD15S8VTryqVuzgAy/view?usp=sharing](https://drive.google.com/file/d/1x1jPuMxBbTs8C97wD15S8VTryqVuzgAy/view?usp=sharing)
-   
+1. **Download** the Docker archive from:  
+   [https://drive.google.com/file/d/1x1jPuMxBbTs8C97wD15S8VTryqVuzgAy/view?usp=sharing](https://drive.google.com/file/d/1x1jPuMxBbTs8C97wD15S8VTryqVuzgAy/view?usp=sharing)
 
 2. **Unzip** the archive (e.g., `LeaveEase.Docker.zip`)
 
@@ -28,64 +30,68 @@ This is the frontend of the **LeaveEase** HR leave management system, developed 
    open http://localhost:4201
    ```
 
-5. **Wait 1 minute** for all containers to initialize, then open your browser:  
-   [http://localhost:4201](http://localhost:4201)
+5. **Wait ~1 minute** for containers to initialize.  
+   Then visit the frontend: [http://localhost:4201](http://localhost:4201)
 
 ---
 
-## 🛠️ Option 2 – Local Development Setup
+## ⚙️ Backend Setup – Local Development (Alternative)
 
 ### Prerequisites
 
-- **Node.js** (includes npm):  
-  👉 [https://nodejs.org/en/download](https://nodejs.org/en/download)
+- **Java Development Kit (JDK 17)**  
+  👉 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 
-- **Angular CLI** (install after Node):  
-  ```bash
-  npm install -g @angular/cli
-  ```
+- **Apache Maven**  
+  👉 [https://maven.apache.org/download.cgi](https://maven.apache.org/download.cgi)
+
+- **IntelliJ IDEA (Recommended IDE)**  
+  👉 [https://www.jetbrains.com/idea/download](https://www.jetbrains.com/idea/download)
 
 ---
 
 ### Setup Steps
 
 ```bash
-cd LeaveEase.UI
-npm install
-ng serve
+# Open the project in IntelliJ
+# Let IntelliJ auto-import all Maven dependencies
 ```
 
-- The app will run on: [http://localhost:4200](http://localhost:4200)
+1. Open the backend folder (`LeaveEaseApi`) in IntelliJ.
+2. Configure the database in:
+   ```
+   src/main/resources/application.properties
+   ```
+
+   Default configuration (for local MySQL):
+   ```properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/leave_ease
+   spring.datasource.username=root
+   spring.datasource.password=your_password
+   ```
+
+3. Build & run the application (Maven `clean install` > Run Main)
+
+- The backend will be available at:  
+  [http://localhost:8080](http://localhost:8080)
 
 ---
 
-## ⚙️ Configuration Notes
+## 🗃️ Database Initialization (Required)
 
-The frontend communicates with the backend API via:
+The backend depends on an existing MySQL database with required schema and seed data.
 
-```ts
-// File: src/appconfig.ts (Line 16)
-export const baseUrl = 'http://localhost:8080/api';
-```
+### Steps:
+1. Install **MySQL Server** and **MySQL Workbench**
+2. Run the following SQL script to create all tables, views and insert testing data:
 
----
-
-## 🐛 Known Angular 19 Build Warning
-
-During hot reload or rebuild, the following console error might appear:
-
-```bash
-TypeError: egetOrCreateAngularServerApp is not a function
-```
-
-✅ This is a known Angular 19 SSR-related issue.  
-💡 **Solution**: Just refresh the browser. It does not affect functionality.
+📎 [initial_reset_database.sql](https://github.com/Steven-Liu-0914/LeaveEaseApi/blob/master/src/database/initial_reset_database.sql)
 
 ---
 
-## 🔐 Test User Accounts
+## 🧪 Test User Accounts
 
-If you've run the `initial_reset_database.sql` from the backend repo, use these:
+After database setup, use the following accounts for login:
 
 | Name    | Role                    | Username | Password  |
 |---------|-------------------------|----------|-----------|
@@ -98,7 +104,7 @@ If you've run the `initial_reset_database.sql` from the backend repo, use these:
 
 ## 📌 Port Availability Reminder
 
-Before starting the frontend, ensure the following ports are **not used** by other apps:
+Before starting the backend, ensure the following ports are **not used** by other apps:
 
 | Port | Usage                         | When                    |
 |------|-------------------------------|-------------------------|
