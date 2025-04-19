@@ -1,11 +1,9 @@
-
 -- 1. Drop and recreate database
 DROP DATABASE IF EXISTS leave_ease;
 CREATE DATABASE leave_ease;
 USE leave_ease;
 
 -- 2. Table: staff
-
 CREATE TABLE staff (
                        StaffId INT AUTO_INCREMENT PRIMARY KEY,
                        StaffNumber NVARCHAR(50),
@@ -20,23 +18,21 @@ CREATE TABLE staff (
 );
 
 -- 3. Table: leaveApplication
-
 CREATE TABLE leaveApplication (
                                   LeaveApplicationId INT AUTO_INCREMENT PRIMARY KEY,
                                   StaffId INT,
-                                  LeaveType NVARCHAR(50),           -- e.g. Annual, Sick, Emergency, Children
+                                  LeaveType NVARCHAR(50),
                                   StartDate DATE,
                                   EndDate DATE,
                                   Reason NVARCHAR(500),
-                                  Status NVARCHAR(20),              -- Pending, Approved, Rejected, Cancelled
+                                  Status NVARCHAR(20),
                                   CreatedAt DATETIME DEFAULT NOW(),
                                   UpdatedAt DATETIME DEFAULT NOW() ON UPDATE NOW(),
                                   FOREIGN KEY (StaffId) REFERENCES staff(StaffId)
 );
 
 -- 4. Table: leaveQuota
-
-CREATE TABLE LeaveQuota (
+CREATE TABLE leaveQuota (
                             LeaveQuotaId INT AUTO_INCREMENT PRIMARY KEY,
                             StaffId INT,
                             Annual INT DEFAULT 14,
@@ -47,9 +43,7 @@ CREATE TABLE LeaveQuota (
                             FOREIGN KEY (StaffId) REFERENCES staff(StaffId)
 );
 
-
--- 5. Table: publicholiday
-
+-- 5. Table: publicHoliday
 CREATE TABLE publicHoliday (
                                PublicHolidayId INT AUTO_INCREMENT PRIMARY KEY,
                                Name NVARCHAR(100),
@@ -58,7 +52,6 @@ CREATE TABLE publicHoliday (
 );
 
 -- 6. View: userprofileview
-
 CREATE
 ALGORITHM = UNDEFINED
     DEFINER = `root`@`localhost`
@@ -73,8 +66,7 @@ SELECT
     JobTitle
 FROM staff;
 
--- 7. Insert sample staff
-
+-- 7. Sample staff
 INSERT INTO staff
 (StaffNumber, FullName, Email, Phone, Department, JobTitle, PasswordHash, PasswordSalt, Role)
 VALUES
@@ -82,21 +74,16 @@ VALUES
     ('B001', 'Bob Lim', 'bob.lim@example.com', '81234568', 'Marketing', 'Manager', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'admin'),
     ('C001', 'Cindy Goh', 'cindy.goh@example.com', '81234569', 'Human Resources', 'HR Admin', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'admin'),
     ('D001', 'Daniel Smith', 'daniel.smith@example.com', '82223645', 'Engineering', 'Technician', '5ea90d5f3adb038a880f664546be500378a4d86146cbefdc30073b07d00229d9', 'a1b2c3d4e5f6g7h8', 'user');
--- INSERT Leave Quota for Amy, Bob, Cindy, Daniel
 
+-- 8. Leave Quota
 INSERT INTO leaveQuota (StaffId, Annual, Children, Sick, Emergency) VALUES
--- Amy
-(1, 10, 5, 14, 2),
--- Bob
-(2, 16, 5, 14, 5),
--- Cindy
-(3, 16, 5, 14, 5),
--- Daniel
-(4, 10, 5, 14, 5);
+                                                                        (1, 10, 5, 14, 2),
+                                                                        (2, 16, 5, 14, 5),
+                                                                        (3, 16, 5, 14, 5),
+                                                                        (4, 10, 5, 14, 5);
 
--- 8. Insert public holidays for 2025
-
-INSERT INTO publicholiday (Name, Date, Day) VALUES
+-- 9. Public Holidays
+INSERT INTO publicHoliday (Name, Date, Day) VALUES
                                                 ('New Year’s Day', '2025-01-01', 'Wednesday'),
                                                 ('Chinese New Year', '2025-01-29', 'Wednesday'),
                                                 ('Chinese New Year', '2025-01-30', 'Thursday'),
@@ -109,11 +96,10 @@ INSERT INTO publicholiday (Name, Date, Day) VALUES
                                                 ('Deepavali', '2025-10-20', 'Monday'),
                                                 ('Christmas Day', '2025-12-25', 'Thursday');
 
-
--- 8. INSERT sample Leave Applications
+-- 10. Sample Leave Applications
 INSERT INTO leaveApplication
 (StaffId, LeaveType, StartDate, EndDate, Reason, Status)
 VALUES
     (2, 'Annual Leave', '2025-04-14', '2025-04-16', 'HOLIDAY', 'Approved'),
     (2, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Approved'),
-    (4, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Pending')
+    (4, 'Children Leave', '2025-04-28', '2025-04-30', 'Take Care Children', 'Pending');

@@ -7,7 +7,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "LeaveApplication")  // ✅ Table name in camelCase
+@Table(name = "leaveApplication")  // ✅ Table name in camelCase
 @Data
 public class LeaveApplicationEntity {
 

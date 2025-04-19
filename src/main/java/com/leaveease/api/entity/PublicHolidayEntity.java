@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "publicholiday")
+@Table(name = "publicHoliday")
 @Data
 public class PublicHolidayEntity {
 
